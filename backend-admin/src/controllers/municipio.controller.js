@@ -48,10 +48,16 @@ export const createMunicipio =
         descripcion,
       } = req.body;
 
+      const cleanNombre =
+        nombre?.trim();
+
+      const cleanDescripcion =
+        descripcion?.trim();
+
       // Validar campos
       if (
-        !nombre ||
-        !descripcion
+        !cleanNombre ||
+        !cleanDescripcion
       ) {
 
         return res.status(400).json({
@@ -64,8 +70,10 @@ export const createMunicipio =
 
       const municipio =
         await createMunicipioService({
-          nombre,
-          descripcion,
+          nombre:
+            cleanNombre,
+          descripcion:
+            cleanDescripcion,
         });
 
       return res.status(201).json({
@@ -77,7 +85,9 @@ export const createMunicipio =
 
     } catch (error) {
 
-      return res.status(500).json({
+      return res.status(
+        error.statusCode || 500
+      ).json({
         ok: false,
         message: error.message,
       });
@@ -124,10 +134,16 @@ export const updateMunicipio =
         descripcion,
       } = req.body;
 
+      const cleanNombre =
+        nombre?.trim();
+
+      const cleanDescripcion =
+        descripcion?.trim();
+
       // Validar campos
       if (
-        !nombre ||
-        !descripcion
+        !cleanNombre ||
+        !cleanDescripcion
       ) {
 
         return res.status(400).json({
@@ -142,8 +158,10 @@ export const updateMunicipio =
         await updateMunicipioService(
           id,
           {
-            nombre,
-            descripcion,
+            nombre:
+              cleanNombre,
+            descripcion:
+              cleanDescripcion,
           }
         );
 
@@ -156,7 +174,9 @@ export const updateMunicipio =
 
     } catch (error) {
 
-      return res.status(500).json({
+      return res.status(
+        error.statusCode || 500
+      ).json({
         ok: false,
         message: error.message,
       });
@@ -202,7 +222,9 @@ export const updateMunicipioStatus =
 
     } catch (error) {
 
-      return res.status(500).json({
+      return res.status(
+        error.statusCode || 500
+      ).json({
         ok: false,
         message: error.message,
       });

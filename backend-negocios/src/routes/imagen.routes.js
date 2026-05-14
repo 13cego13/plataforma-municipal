@@ -10,6 +10,7 @@ import {
 
 import {
   upload,
+  handleUploadError,
 } from "../middlewares/upload.middleware.js";
 
 import {
@@ -25,6 +26,7 @@ router.post(
   verifyToken,
   verifyRole("DUENO_NEGOCIO"),
   upload.single("imagen"),
+  handleUploadError,
   uploadMainImage
 );
 
@@ -33,6 +35,7 @@ router.post(
   verifyToken,
   verifyRole("DUENO_NEGOCIO"),
   upload.array("imagenes", 10),
+  handleUploadError,
   uploadGalleryImages
 );
 

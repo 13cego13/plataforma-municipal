@@ -14,6 +14,48 @@ import {
   updateCategoriaStatusService,
 } from "../services/categoria.service.js";
 
+const isValidImageUrl =
+  (value) => {
+
+    try {
+
+      const url =
+        new URL(value);
+
+      if (
+        !["http:", "https:"]
+          .includes(url.protocol)
+      ) {
+
+        return false;
+
+      }
+
+      return /\.(jpg|jpeg|png|webp|gif|svg|avif)$/i
+        .test(url.pathname);
+
+    } catch {
+
+      return false;
+
+    }
+
+};
+
+const getCleanCategoriaData =
+  ({
+    nombre,
+    descripcion,
+    imagen_url,
+  }) => ({
+    nombre:
+      nombre?.trim(),
+    descripcion:
+      descripcion?.trim(),
+    imagen_url:
+      imagen_url?.trim(),
+  });
+
 export const getCategorias =
   async (req, res) => {
 
@@ -43,17 +85,15 @@ export const createCategoria =
 
     try {
 
-      const {
-        nombre,
-        descripcion,
-        imagen_url,
-      } = req.body;
+      const cleanData =
+        getCleanCategoriaData(
+          req.body
+        );
 
-      // Validar campos
       if (
-        !nombre ||
-        !descripcion ||
-        !imagen_url
+        !cleanData.nombre ||
+        !cleanData.descripcion ||
+        !cleanData.imagen_url
       ) {
 
         return res.status(400).json({
@@ -64,23 +104,37 @@ export const createCategoria =
 
       }
 
-      const categoria =
-        await createCategoriaService({
-          nombre,
-          descripcion,
-          imagen_url,
+      if (
+        !isValidImageUrl(
+          cleanData.imagen_url
+        )
+      ) {
+
+        return res.status(400).json({
+          ok: false,
+          message:
+            "Ingresa una URL de imagen valida",
         });
+
+      }
+
+      const categoria =
+        await createCategoriaService(
+          cleanData
+        );
 
       return res.status(201).json({
         ok: true,
         message:
-          "Categoría creada correctamente",
+          "Categoria creada correctamente",
         categoria,
       });
 
     } catch (error) {
 
-      return res.status(500).json({
+      return res.status(
+        error.statusCode || 500
+      ).json({
         ok: false,
         message: error.message,
       });
@@ -106,7 +160,9 @@ export const getCategoriaById =
 
     } catch (error) {
 
-      return res.status(404).json({
+      return res.status(
+        error.statusCode || 404
+      ).json({
         ok: false,
         message: error.message,
       });
@@ -122,17 +178,15 @@ export const updateCategoria =
 
       const { id } = req.params;
 
-      const {
-        nombre,
-        descripcion,
-        imagen_url,
-      } = req.body;
+      const cleanData =
+        getCleanCategoriaData(
+          req.body
+        );
 
-      // Validar campos
       if (
-        !nombre ||
-        !descripcion ||
-        !imagen_url
+        !cleanData.nombre ||
+        !cleanData.descripcion ||
+        !cleanData.imagen_url
       ) {
 
         return res.status(400).json({
@@ -143,26 +197,38 @@ export const updateCategoria =
 
       }
 
+      if (
+        !isValidImageUrl(
+          cleanData.imagen_url
+        )
+      ) {
+
+        return res.status(400).json({
+          ok: false,
+          message:
+            "Ingresa una URL de imagen valida",
+        });
+
+      }
+
       const categoria =
         await updateCategoriaService(
           id,
-          {
-            nombre,
-            descripcion,
-            imagen_url,
-          }
+          cleanData
         );
 
       return res.status(200).json({
         ok: true,
         message:
-          "Categoría actualizada correctamente",
+          "Categoria actualizada correctamente",
         categoria,
       });
 
     } catch (error) {
 
-      return res.status(500).json({
+      return res.status(
+        error.statusCode || 500
+      ).json({
         ok: false,
         message: error.message,
       });
@@ -180,7 +246,6 @@ export const updateCategoriaStatus =
 
       const { estado } = req.body;
 
-      // Validar boolean
       if (
         typeof estado !== "boolean"
       ) {
@@ -208,7 +273,9 @@ export const updateCategoriaStatus =
 
     } catch (error) {
 
-      return res.status(500).json({
+      return res.status(
+        error.statusCode || 500
+      ).json({
         ok: false,
         message: error.message,
       });

@@ -22,8 +22,8 @@ export const findMunicipioByName =
     const query = `
       SELECT *
       FROM municipio
-      WHERE LOWER(nombre) =
-      LOWER($1)
+      WHERE LOWER(TRIM(nombre)) =
+      LOWER(TRIM($1))
     `;
 
     const result =

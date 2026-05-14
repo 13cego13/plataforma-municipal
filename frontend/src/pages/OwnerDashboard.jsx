@@ -36,6 +36,9 @@ import EditBusinessModal
 import BusinessTable
   from "../components/owner/BusinessTable";
 
+import Toast
+  from "../components/common/Toast";
+
 function OwnerDashboard() {
 
   const navigate =
@@ -100,6 +103,14 @@ function OwnerDashboard() {
         id_municipio: "",
       });
 
+  const [fieldErrors,
+    setFieldErrors] =
+      useState({});
+
+  const [notification,
+    setNotification] =
+      useState(null);
+
   const loadBusinesses =
     async () => {
 
@@ -140,6 +151,37 @@ function OwnerDashboard() {
 
   }, []);
 
+  useEffect(() => {
+
+    if (!notification) {
+
+      return;
+
+    }
+
+    const timer =
+      setTimeout(() => {
+
+        setNotification(null);
+
+      }, 5000);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [notification]);
+
+  const showNotification =
+    (type, message, title) => {
+
+      setNotification({
+        type,
+        message,
+        title,
+      });
+
+  };
+
   const filteredBusinesses =
     useMemo(() => {
 
@@ -169,11 +211,25 @@ function OwnerDashboard() {
   const handleChange =
     (e) => {
 
+      const {
+        name,
+        value,
+      } = e.target;
+
       setFormData({
         ...formData,
-        [e.target.name]:
-          e.target.value,
+        [name]:
+          value,
       });
+
+      if (fieldErrors[name]) {
+
+        setFieldErrors({
+          ...fieldErrors,
+          [name]: "",
+        });
+
+      }
 
   };
 
@@ -184,6 +240,156 @@ function OwnerDashboard() {
         ...editFormData,
         [e.target.name]:
           e.target.value,
+      });
+
+  };
+
+  const allowedImageTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "image/avif",
+  ];
+
+  const isValidImageFile =
+    (file) => {
+
+      if (!file) {
+
+        return true;
+
+      }
+
+      return allowedImageTypes
+        .includes(file.type);
+
+  };
+
+  const getImageError =
+    (file) =>
+      `El archivo "${file.name}" no tiene un formato de imagen valido. Usa JPG, PNG, WEBP, GIF, SVG o AVIF.`;
+
+  const validateCreateBusiness =
+    () => {
+
+      const errors = {};
+
+      const labels = {
+        nombre: "El nombre es obligatorio",
+        descripcion:
+          "La descripcion es obligatoria",
+        direccion:
+          "La direccion es obligatoria",
+        telefono:
+          "El telefono es obligatorio",
+        id_categoria:
+          "Selecciona una categoria",
+        id_municipio:
+          "Selecciona un municipio",
+      };
+
+      Object.entries(labels)
+        .forEach(([
+          field,
+          message,
+        ]) => {
+
+          if (!formData[field]?.trim()) {
+
+            errors[field] = message;
+
+          }
+
+        });
+
+      if (!selectedImage) {
+
+        errors.selectedImage =
+          "La imagen principal es obligatoria";
+
+      } else if (
+        !isValidImageFile(
+          selectedImage
+        )
+      ) {
+
+        errors.selectedImage =
+          getImageError(selectedImage);
+
+      }
+
+      const invalidGalleryImage =
+        galleryImages.find(
+          (image) =>
+            !isValidImageFile(image)
+        );
+
+      if (invalidGalleryImage) {
+
+        errors.galleryImages =
+          getImageError(
+            invalidGalleryImage
+          );
+
+      }
+
+      setFieldErrors(errors);
+
+      if (
+        Object.keys(errors).length > 0
+      ) {
+
+        showNotification(
+          "error",
+          "Revisa los campos obligatorios y los archivos seleccionados"
+        );
+
+        return false;
+
+      }
+
+      return true;
+
+  };
+
+  const getCleanBusinessData =
+    () => ({
+      nombre:
+        formData.nombre.trim(),
+      descripcion:
+        formData.descripcion.trim(),
+      direccion:
+        formData.direccion.trim(),
+      telefono:
+        formData.telefono.trim(),
+      id_categoria:
+        formData.id_categoria,
+      id_municipio:
+        formData.id_municipio,
+    });
+
+  const handleMainImageChange =
+    (file) => {
+
+      setSelectedImage(file || null);
+
+      setFieldErrors({
+        ...fieldErrors,
+        selectedImage: "",
+      });
+
+  };
+
+  const handleGalleryImagesChange =
+    (files) => {
+
+      setGalleryImages(files);
+
+      setFieldErrors({
+        ...fieldErrors,
+        galleryImages: "",
       });
 
   };

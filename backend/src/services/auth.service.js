@@ -29,15 +29,42 @@ export const registerService = async (data) => {
     telefono,
   } = data;
 
+  const cleanData = {
+    nombre:
+      nombre.trim(),
+    correo:
+      correo.trim(),
+    contrasena,
+    razon_social:
+      razon_social.trim(),
+    documento:
+      documento.trim(),
+    telefono:
+      telefono.trim(),
+  };
+
   // Verificar correo duplicado
-  const existingUser = await findUserByEmail(correo);
+  const existingUser = await findUserByEmail(
+    cleanData.correo
+  );
 
   if (existingUser) {
-    throw new Error("El correo ya está registrado");
+
+    const error =
+      new Error(
+        "El correo ya esta registrado"
+      );
+
+    error.statusCode = 409;
+
+    throw error;
+
   }
 
   // Hash password
-  const hashedPassword = await hashPassword(contrasena);
+  const hashedPassword = await hashPassword(
+    cleanData.contrasena
+  );
 
   // ID rol dueño negocio
   // luego lo haremos dinámico
@@ -45,8 +72,10 @@ export const registerService = async (data) => {
 
   // Crear usuario
   const user = await createUser({
-    nombre,
-    correo,
+    nombre:
+      cleanData.nombre,
+    correo:
+      cleanData.correo,
     contrasena: hashedPassword,
     id_rol: OWNER_ROLE_ID,
   });
@@ -54,9 +83,12 @@ export const registerService = async (data) => {
   // Crear dueño negocio
   await createBusinessOwner({
     id_usuario: user.id_usuario,
-    razon_social,
-    documento,
-    telefono,
+    razon_social:
+      cleanData.razon_social,
+    documento:
+      cleanData.documento,
+    telefono:
+      cleanData.telefono,
   });
 
   return {

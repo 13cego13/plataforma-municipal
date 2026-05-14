@@ -4,7 +4,8 @@ export const findUserByEmail = async (correo) => {
   const query = `
     SELECT *
     FROM usuario
-    WHERE correo = $1
+    WHERE LOWER(TRIM(correo)) =
+      LOWER(TRIM($1))
   `;
 
   const result = await pool.query(query, [correo]);
@@ -87,7 +88,8 @@ export const findUserWithRoleByEmail = async (correo) => {
     FROM usuario u
     INNER JOIN rol r
       ON u.id_rol = r.id_rol
-    WHERE u.correo = $1
+    WHERE LOWER(TRIM(u.correo)) =
+      LOWER(TRIM($1))
   `;
 
   const result = await pool.query(query, [correo]);

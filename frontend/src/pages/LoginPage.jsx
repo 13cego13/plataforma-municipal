@@ -191,6 +191,23 @@ function LoginPage() {
           Ingresar
         </button>
 
+        <button
+          type="button"
+          onClick={
+            () =>
+              navigate("/register")
+          }
+          className="
+            w-full
+            mt-4
+            text-blue-700
+            font-semibold
+            hover:text-blue-900
+          "
+        >
+          Registrarme como dueño de negocio
+        </button>
+
       </form>
 
     </div>

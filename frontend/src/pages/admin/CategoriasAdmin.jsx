@@ -12,6 +12,9 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
+import Toast
+from "../../components/common/Toast";
+
 function CategoriasAdmin() {
 
   const API =
@@ -49,6 +52,14 @@ function CategoriasAdmin() {
         imagen_url: "",
       });
 
+  const [fieldErrors,
+    setFieldErrors] =
+      useState({});
+
+  const [notification,
+    setNotification] =
+      useState(null);
+
   const token =
     localStorage.getItem("token");
 
@@ -57,6 +68,187 @@ function CategoriasAdmin() {
     loadCategorias();
 
   }, []);
+
+  useEffect(() => {
+
+    if (!notification) {
+
+      return;
+
+    }
+
+    const timer =
+      setTimeout(() => {
+
+        setNotification(null);
+
+      }, 4200);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [notification]);
+
+  const showNotification =
+    (type, message, title) => {
+
+      setNotification({
+        type,
+        message,
+        title,
+      });
+
+  };
+
+  const isValidImageUrl =
+    (value) => {
+
+      try {
+
+        const url =
+          new URL(value);
+
+        if (
+          !["http:", "https:"]
+            .includes(url.protocol)
+        ) {
+
+          return false;
+
+        }
+
+        return /\.(jpg|jpeg|png|webp|gif|svg|avif)$/i
+          .test(url.pathname);
+
+      } catch {
+
+        return false;
+
+      }
+
+  };
+
+  const validateForm =
+    () => {
+
+      const errors = {};
+
+      if (!formData.nombre.trim()) {
+
+        errors.nombre =
+          "El nombre es obligatorio";
+
+      }
+
+      if (!formData.descripcion.trim()) {
+
+        errors.descripcion =
+          "La descripcion es obligatoria";
+
+      }
+
+      if (!formData.imagen_url.trim()) {
+
+        errors.imagen_url =
+          "La URL de la imagen es obligatoria";
+
+      } else if (
+        !isValidImageUrl(
+          formData.imagen_url.trim()
+        )
+      ) {
+
+        errors.imagen_url =
+          "Ingresa una URL de imagen valida (JPG, PNG, WEBP, GIF, SVG o AVIF)";
+
+      }
+
+      setFieldErrors(errors);
+
+      if (
+        Object.keys(errors).length > 0
+      ) {
+
+        showNotification(
+          "error",
+          "Revisa los campos marcados antes de guardar"
+        );
+
+        return false;
+
+      }
+
+      return true;
+
+  };
+
+  const getCleanFormData =
+    () => ({
+      nombre:
+        formData.nombre.trim(),
+      descripcion:
+        formData.descripcion.trim(),
+      imagen_url:
+        formData.imagen_url.trim(),
+    });
+
+  const getCategoriaErrorMessage =
+    (message) => {
+
+      const normalizedMessage =
+        message?.toLowerCase() || "";
+
+      if (
+        normalizedMessage.includes(
+          "categoria ya existe"
+        )
+        ||
+        normalizedMessage.includes(
+          "categoría ya existe"
+        )
+        ||
+        normalizedMessage.includes(
+          "ya existe una categoria"
+        )
+        ||
+        normalizedMessage.includes(
+          "ya existe una categoría"
+        )
+      ) {
+
+        return "No se puede registrar una categoria que ya existe";
+
+      }
+
+      if (
+        normalizedMessage.includes(
+          "imagen"
+        )
+        &&
+        normalizedMessage.includes(
+          "url"
+        )
+      ) {
+
+        return "Ingresa una URL de imagen valida";
+
+      }
+
+      return (
+        message
+        || "No se pudo completar la operacion"
+      );
+
+  };
+
+  const closeModal =
+    () => {
+
+      setShowModal(false);
+
+      setFieldErrors({});
+
+  };
 
   // =========================================
   // CARGAR CATEGORIAS
@@ -98,11 +290,25 @@ function CategoriasAdmin() {
   const handleChange =
     (e) => {
 
+      const {
+        name,
+        value,
+      } = e.target;
+
       setFormData({
         ...formData,
-        [e.target.name]:
-          e.target.value,
+        [name]:
+          value,
       });
+
+      if (fieldErrors[name]) {
+
+        setFieldErrors({
+          ...fieldErrors,
+          [name]: "",
+        });
+
+      }
 
   };
 
@@ -115,7 +321,16 @@ function CategoriasAdmin() {
 
       e.preventDefault();
 
+      if (!validateForm()) {
+
+        return;
+
+      }
+
       try {
+
+        const cleanFormData =
+          getCleanFormData();
 
         const response =
           await fetch(
@@ -129,7 +344,7 @@ function CategoriasAdmin() {
                   `Bearer ${token}`,
               },
               body: JSON.stringify(
-                formData
+                cleanFormData
               ),
             }
           );
@@ -139,18 +354,22 @@ function CategoriasAdmin() {
 
         if (!response.ok) {
 
-          return alert(
-            data.message
-            || "Error al crear categoría"
+          return showNotification(
+            "error",
+            getCategoriaErrorMessage(
+              data.message
+            )
           );
 
         }
 
-        alert(
-          "Categoría creada correctamente"
+        showNotification(
+          "success",
+          data.message
+          || "Categoria creada correctamente"
         );
 
-        setShowModal(false);
+        closeModal();
 
         setFormData({
           nombre: "",
@@ -164,8 +383,9 @@ function CategoriasAdmin() {
 
         console.log(error);
 
-        alert(
-          "Error del servidor"
+        showNotification(
+          "error",
+          "Ocurrio un error interno. Intentalo nuevamente."
         );
 
       }
@@ -181,7 +401,16 @@ function CategoriasAdmin() {
 
       e.preventDefault();
 
+      if (!validateForm()) {
+
+        return;
+
+      }
+
       try {
+
+        const cleanFormData =
+          getCleanFormData();
 
         const response =
           await fetch(
@@ -195,7 +424,7 @@ function CategoriasAdmin() {
                   `Bearer ${token}`,
               },
               body: JSON.stringify(
-                formData
+                cleanFormData
               ),
             }
           );
@@ -205,18 +434,22 @@ function CategoriasAdmin() {
 
         if (!response.ok) {
 
-          return alert(
-            data.message
-            || "Error al editar"
+          return showNotification(
+            "error",
+            getCategoriaErrorMessage(
+              data.message
+            )
           );
 
         }
 
-        alert(
-          "Categoría actualizada"
+        showNotification(
+          "success",
+          data.message
+          || "Categoria actualizada correctamente"
         );
 
-        setShowModal(false);
+        closeModal();
 
         loadCategorias();
 
@@ -224,8 +457,9 @@ function CategoriasAdmin() {
 
         console.log(error);
 
-        alert(
-          "Error del servidor"
+        showNotification(
+          "error",
+          "Ocurrio un error interno. Intentalo nuevamente."
         );
 
       }
@@ -264,12 +498,19 @@ function CategoriasAdmin() {
 
         if (!response.ok) {
 
-          return alert(
+          return showNotification(
+            "error",
             data.message
             || "Error al actualizar estado"
           );
 
         }
+
+        showNotification(
+          "success",
+          data.message
+          || "Estado actualizado correctamente"
+        );
 
         loadCategorias();
 
@@ -277,8 +518,9 @@ function CategoriasAdmin() {
 
         console.log(error);
 
-        alert(
-          "Error del servidor"
+        showNotification(
+          "error",
+          "Ocurrio un error interno. Intentalo nuevamente."
         );
 
       }
@@ -303,6 +545,8 @@ function CategoriasAdmin() {
         descripcion: "",
         imagen_url: "",
       });
+
+      setFieldErrors({});
 
       setShowModal(true);
 
@@ -329,6 +573,8 @@ function CategoriasAdmin() {
         imagen_url:
           categoria.imagen_url || "",
       });
+
+      setFieldErrors({});
 
       setShowModal(true);
 
@@ -391,6 +637,14 @@ function CategoriasAdmin() {
   return (
 
     <>
+
+      <Toast
+        notification={notification}
+        onClose={
+          () =>
+            setNotification(null)
+        }
+      />
 
       <div
         className="
@@ -948,10 +1202,11 @@ function CategoriasAdmin() {
               bg-black/60
               backdrop-blur-sm
               flex
-              items-center
+              items-start
               justify-center
               z-50
               p-6
+              overflow-y-auto
             "
           >
 
@@ -961,7 +1216,9 @@ function CategoriasAdmin() {
                 rounded-[32px]
                 w-full
                 max-w-2xl
-                overflow-hidden
+                my-4
+                max-h-[calc(100vh-2rem)]
+                overflow-y-auto
                 shadow-2xl
               "
             >
@@ -1016,10 +1273,7 @@ function CategoriasAdmin() {
 
                   <button
                     onClick={
-                      () =>
-                        setShowModal(
-                          false
-                        )
+                      closeModal
                     }
                     className="
                       w-12
@@ -1046,6 +1300,7 @@ function CategoriasAdmin() {
                   ? handleEdit
                   : handleCreate
                 }
+                noValidate
                 className="
                   p-8
                   flex
@@ -1059,13 +1314,21 @@ function CategoriasAdmin() {
 
                   <label
                     className="
-                      block
+                      flex
+                      items-center
+                      gap-1
                       mb-2
                       font-semibold
                       text-slate-700
                     "
                   >
                     Nombre
+                    <span
+                      className="text-red-500"
+                      aria-hidden="true"
+                    >
+                      *
+                    </span>
                   </label>
 
                   <input
@@ -1078,19 +1341,55 @@ function CategoriasAdmin() {
                       handleChange
                     }
                     required
-                    className="
+                    aria-invalid={
+                      Boolean(
+                        fieldErrors.nombre
+                      )
+                    }
+                    className={`
                       w-full
-                      bg-slate-100
                       border
-                      border-slate-200
                       rounded-2xl
                       px-5
                       py-4
                       outline-none
                       focus:ring-2
-                      focus:ring-slate-300
-                    "
+
+                      ${
+                        fieldErrors.nombre
+                        ? `
+                          bg-red-50
+                          border-red-300
+                          focus:ring-red-200
+                        `
+                        : `
+                          bg-slate-100
+                          border-slate-200
+                          focus:ring-slate-300
+                        `
+                      }
+                    `}
                   />
+
+                  {
+                    fieldErrors.nombre
+                    && (
+
+                      <p
+                        className="
+                          mt-2
+                          text-sm
+                          font-semibold
+                          text-red-600
+                        "
+                      >
+                        {
+                          fieldErrors.nombre
+                        }
+                      </p>
+
+                    )
+                  }
 
                 </div>
 
@@ -1099,13 +1398,21 @@ function CategoriasAdmin() {
 
                   <label
                     className="
-                      block
+                      flex
+                      items-center
+                      gap-1
                       mb-2
                       font-semibold
                       text-slate-700
                     "
                   >
                     Descripción
+                    <span
+                      className="text-red-500"
+                      aria-hidden="true"
+                    >
+                      *
+                    </span>
                   </label>
 
                   <textarea
@@ -1118,20 +1425,56 @@ function CategoriasAdmin() {
                       handleChange
                     }
                     required
-                    className="
+                    aria-invalid={
+                      Boolean(
+                        fieldErrors.descripcion
+                      )
+                    }
+                    className={`
                       w-full
-                      bg-slate-100
                       border
-                      border-slate-200
                       rounded-2xl
                       px-5
                       py-4
                       outline-none
                       focus:ring-2
-                      focus:ring-slate-300
                       resize-none
-                    "
+
+                      ${
+                        fieldErrors.descripcion
+                        ? `
+                          bg-red-50
+                          border-red-300
+                          focus:ring-red-200
+                        `
+                        : `
+                          bg-slate-100
+                          border-slate-200
+                          focus:ring-slate-300
+                        `
+                      }
+                    `}
                   />
+
+                  {
+                    fieldErrors.descripcion
+                    && (
+
+                      <p
+                        className="
+                          mt-2
+                          text-sm
+                          font-semibold
+                          text-red-600
+                        "
+                      >
+                        {
+                          fieldErrors.descripcion
+                        }
+                      </p>
+
+                    )
+                  }
 
                 </div>
 
@@ -1140,13 +1483,21 @@ function CategoriasAdmin() {
 
                   <label
                     className="
-                      block
+                      flex
+                      items-center
+                      gap-1
                       mb-2
                       font-semibold
                       text-slate-700
                     "
                   >
                     URL Imagen
+                    <span
+                      className="text-red-500"
+                      aria-hidden="true"
+                    >
+                      *
+                    </span>
                   </label>
 
                   <div className="relative">
@@ -1168,32 +1519,70 @@ function CategoriasAdmin() {
                       value={
                         formData.imagen_url
                       }
-                      onChange={
-                        handleChange
-                      }
-                      required
-                      className="
-                        w-full
-                        bg-slate-100
-                        border
-                        border-slate-200
-                        rounded-2xl
-                        pl-12
-                        pr-5
-                        py-4
-                        outline-none
-                        focus:ring-2
-                        focus:ring-slate-300
-                      "
-                    />
+                    onChange={
+                      handleChange
+                    }
+                    required
+                    aria-invalid={
+                      Boolean(
+                        fieldErrors.imagen_url
+                      )
+                    }
+                    className={`
+                      w-full
+                      border
+                      rounded-2xl
+                      pl-12
+                      pr-5
+                      py-4
+                      outline-none
+                      focus:ring-2
 
-                  </div>
+                      ${
+                        fieldErrors.imagen_url
+                        ? `
+                          bg-red-50
+                          border-red-300
+                          focus:ring-red-200
+                        `
+                        : `
+                          bg-slate-100
+                          border-slate-200
+                          focus:ring-slate-300
+                        `
+                      }
+                    `}
+                  />
 
                 </div>
 
+                {
+                  fieldErrors.imagen_url
+                  && (
+
+                    <p
+                      className="
+                        mt-2
+                        text-sm
+                        font-semibold
+                        text-red-600
+                      "
+                    >
+                      {
+                        fieldErrors.imagen_url
+                      }
+                    </p>
+
+                  )
+                }
+
+              </div>
+
                 {/* PREVIEW */}
                 {
-                  formData.imagen_url
+                  isValidImageUrl(
+                    formData.imagen_url.trim()
+                  )
                   && (
 
                     <div>
@@ -1215,7 +1604,7 @@ function CategoriasAdmin() {
                         alt="preview"
                         className="
                           w-full
-                          h-60
+                          h-40
                           object-cover
                           rounded-3xl
                           border
@@ -1241,10 +1630,7 @@ function CategoriasAdmin() {
                   <button
                     type="button"
                     onClick={
-                      () =>
-                        setShowModal(
-                          false
-                        )
+                      closeModal
                     }
                     className="
                       px-6

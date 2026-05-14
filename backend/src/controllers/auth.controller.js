@@ -21,14 +21,28 @@ export const register = async (req, res) => {
       telefono,
     } = req.body;
 
+    const cleanData = {
+      nombre:
+        nombre?.trim(),
+      correo:
+        correo?.trim(),
+      contrasena,
+      razon_social:
+        razon_social?.trim(),
+      documento:
+        documento?.trim(),
+      telefono:
+        telefono?.trim(),
+    };
+
     // Validaciones básicas
     if (
-      !nombre ||
-      !correo ||
-      !contrasena ||
-      !razon_social ||
-      !documento ||
-      !telefono
+      !cleanData.nombre ||
+      !cleanData.correo ||
+      !cleanData.contrasena ||
+      !cleanData.razon_social ||
+      !cleanData.documento ||
+      !cleanData.telefono
     ) {
       return res.status(400).json({
         ok: false,
@@ -37,7 +51,7 @@ export const register = async (req, res) => {
     }
 
     // Password mínima
-    if (contrasena.length < 8) {
+    if (cleanData.contrasena.length < 8) {
       return res.status(400).json({
         ok: false,
         message:
@@ -45,7 +59,9 @@ export const register = async (req, res) => {
       });
     }
 
-    const result = await registerService(req.body);
+    const result = await registerService(
+      cleanData
+    );
 
     return res.status(201).json({
       ok: true,
@@ -53,7 +69,9 @@ export const register = async (req, res) => {
       data: result.user,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(
+      error.statusCode || 500
+    ).json({
       ok: false,
       message: error.message,
     });

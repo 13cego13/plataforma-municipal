@@ -27,6 +27,9 @@ import {
   updateUser,
 } from "../../services/admin/usuarios.service";
 
+import Toast
+from "../../components/common/Toast";
+
 function UsuariosPendientes() {
 
   const [users, setUsers] =
@@ -49,6 +52,10 @@ function UsuariosPendientes() {
     setSelectedUser] =
       useState(null);
 
+  const [notification,
+    setNotification] =
+      useState(null);
+
  const [formData,
   setFormData] =
     useState({
@@ -66,6 +73,37 @@ function UsuariosPendientes() {
     loadUsers();
 
   }, []);
+
+  useEffect(() => {
+
+    if (!notification) {
+
+      return;
+
+    }
+
+    const timer =
+      setTimeout(() => {
+
+        setNotification(null);
+
+      }, 4200);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [notification]);
+
+  const showNotification =
+    (type, message, title) => {
+
+      setNotification({
+        type,
+        message,
+        title,
+      });
+
+  };
 
   // ========================================
   // LOAD USERS
@@ -110,11 +148,22 @@ function UsuariosPendientes() {
           id_usuario
         );
 
+        showNotification(
+          "success",
+          "Usuario aprobado correctamente"
+        );
+
         loadUsers();
 
       } catch (error) {
 
         console.log(error);
+
+        showNotification(
+          "error",
+          error.response?.data?.message
+          || "Error aprobando usuario"
+        );
 
       }
 
@@ -129,11 +178,22 @@ function UsuariosPendientes() {
           id_usuario
         );
 
+        showNotification(
+          "success",
+          "Usuario rechazado correctamente"
+        );
+
         loadUsers();
 
       } catch (error) {
 
         console.log(error);
+
+        showNotification(
+          "error",
+          error.response?.data?.message
+          || "Error rechazando usuario"
+        );
 
       }
 
@@ -148,11 +208,22 @@ function UsuariosPendientes() {
           id_usuario
         );
 
+        showNotification(
+          "success",
+          "Usuario desactivado correctamente"
+        );
+
         loadUsers();
 
       } catch (error) {
 
         console.log(error);
+
+        showNotification(
+          "error",
+          error.response?.data?.message
+          || "Error desactivando usuario"
+        );
 
       }
 
@@ -167,11 +238,22 @@ function UsuariosPendientes() {
           id_usuario
         );
 
+        showNotification(
+          "success",
+          "Usuario activado correctamente"
+        );
+
         loadUsers();
 
       } catch (error) {
 
         console.log(error);
+
+        showNotification(
+          "error",
+          error.response?.data?.message
+          || "Error activando usuario"
+        );
 
       }
 
@@ -192,6 +274,11 @@ function UsuariosPendientes() {
           formData
         );
 
+        showNotification(
+          "success",
+          "Usuario creado correctamente"
+        );
+
         setShowModal(false);
 
         setFormData({
@@ -209,6 +296,12 @@ function UsuariosPendientes() {
       } catch (error) {
 
         console.log(error);
+
+        showNotification(
+          "error",
+          error.response?.data?.message
+          || "Error creando usuario"
+        );
 
       }
 
@@ -234,11 +327,22 @@ function UsuariosPendientes() {
 
         setSelectedUser(null);
 
+        showNotification(
+          "success",
+          "Usuario actualizado correctamente"
+        );
+
         loadUsers();
 
       } catch (error) {
 
         console.log(error);
+
+        showNotification(
+          "error",
+          error.response?.data?.message
+          || "Error actualizando usuario"
+        );
 
       }
 
@@ -359,6 +463,14 @@ function UsuariosPendientes() {
         rounded-3xl
       "
     >
+
+      <Toast
+        notification={notification}
+        onClose={
+          () =>
+            setNotification(null)
+        }
+      />
 
       {/* HERO */}
       <div

@@ -14,3 +14,16 @@ export const loginRequest =
     return response.data;
 
 };
+
+export const registerRequest =
+  async (userData) => {
+
+    const response =
+      await authAPI.post(
+        "/auth/register",
+        userData
+      );
+
+    return response.data;
+
+};

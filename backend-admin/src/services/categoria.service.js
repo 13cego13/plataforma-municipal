@@ -29,29 +29,40 @@ export const createCategoriaService =
     imagen_url,
   }) => {
 
-    // Validar duplicado
     const existingCategoria =
       await findCategoriaByName(nombre);
 
     if (existingCategoria) {
 
-      throw new Error(
-        "La categoría ya existe"
-      );
+      const error =
+        new Error(
+          "No se puede registrar una categoria que ya existe"
+        );
+
+      error.statusCode = 409;
+
+      throw error;
 
     }
 
-    // Crear categoría
+    const cleanData = {
+      nombre:
+        nombre.trim(),
+      descripcion:
+        descripcion.trim(),
+      imagen_url:
+        imagen_url.trim(),
+    };
+
     const categoria =
-      await createCategoriaModel({
-        nombre,
-        descripcion,
-        imagen_url,
-      });
+      await createCategoriaModel(
+        cleanData
+      );
 
     return categoria;
 
 };
+
 export const getCategoriaByIdService =
   async (id) => {
 
@@ -60,9 +71,14 @@ export const getCategoriaByIdService =
 
     if (!categoria) {
 
-      throw new Error(
-        "Categoría no encontrada"
-      );
+      const error =
+        new Error(
+          "Categoria no encontrada"
+        );
+
+      error.statusCode = 404;
+
+      throw error;
 
     }
 
@@ -80,42 +96,56 @@ export const updateCategoriaService =
     }
   ) => {
 
-    // Validar existencia
     const existingCategoria =
       await getCategoriaByIdModel(id);
 
     if (!existingCategoria) {
 
-      throw new Error(
-        "Categoría no encontrada"
-      );
+      const error =
+        new Error(
+          "Categoria no encontrada"
+        );
+
+      error.statusCode = 404;
+
+      throw error;
 
     }
 
-    // Validar duplicado
+    const cleanData = {
+      nombre:
+        nombre.trim(),
+      descripcion:
+        descripcion.trim(),
+      imagen_url:
+        imagen_url.trim(),
+    };
+
     const duplicatedCategoria =
-      await findCategoriaByName(nombre);
+      await findCategoriaByName(
+        cleanData.nombre
+      );
 
     if (
       duplicatedCategoria &&
       duplicatedCategoria.id_categoria !== id
     ) {
 
-      throw new Error(
-        "Ya existe una categoría con ese nombre"
-      );
+      const error =
+        new Error(
+          "No se puede registrar una categoria que ya existe"
+        );
+
+      error.statusCode = 409;
+
+      throw error;
 
     }
 
-    // Actualizar
     const categoria =
       await updateCategoriaModel(
         id,
-        {
-          nombre,
-          descripcion,
-          imagen_url,
-        }
+        cleanData
       );
 
     return categoria;
@@ -128,15 +158,19 @@ export const updateCategoriaStatusService =
     estado
   ) => {
 
-    // Validar existencia
     const categoria =
       await getCategoriaByIdModel(id);
 
     if (!categoria) {
 
-      throw new Error(
-        "Categoría no encontrada"
-      );
+      const error =
+        new Error(
+          "Categoria no encontrada"
+        );
+
+      error.statusCode = 404;
+
+      throw error;
 
     }
 

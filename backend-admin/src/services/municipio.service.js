@@ -34,18 +34,29 @@ export const createMunicipioService =
 
     if (existingMunicipio) {
 
-      throw new Error(
-        "El municipio ya existe"
-      );
+      const error =
+        new Error(
+          "No se puede registrar un municipio que ya existe"
+        );
+
+      error.statusCode = 409;
+
+      throw error;
 
     }
 
+    const cleanData = {
+      nombre:
+        nombre.trim(),
+      descripcion:
+        descripcion.trim(),
+    };
+
     // Crear municipio
     const municipio =
-      await createMunicipioModel({
-        nombre,
-        descripcion,
-      });
+      await createMunicipioModel(
+        cleanData
+      );
 
     return municipio;
 
@@ -84,24 +95,43 @@ export const updateMunicipioService =
 
     if (!existingMunicipio) {
 
-      throw new Error(
-        "Municipio no encontrado"
-      );
+      const error =
+        new Error(
+          "Municipio no encontrado"
+        );
+
+      error.statusCode = 404;
+
+      throw error;
 
     }
 
+    const cleanData = {
+      nombre:
+        nombre.trim(),
+      descripcion:
+        descripcion.trim(),
+    };
+
     // Validar nombre duplicado
     const duplicatedMunicipio =
-      await findMunicipioByName(nombre);
+      await findMunicipioByName(
+        cleanData.nombre
+      );
 
     if (
       duplicatedMunicipio &&
       duplicatedMunicipio.id_municipio !== id
     ) {
 
-      throw new Error(
-        "Ya existe un municipio con ese nombre"
-      );
+      const error =
+        new Error(
+          "No se puede registrar un municipio que ya existe"
+        );
+
+      error.statusCode = 409;
+
+      throw error;
 
     }
 
@@ -109,10 +139,7 @@ export const updateMunicipioService =
     const municipio =
       await updateMunicipioModel(
         id,
-        {
-          nombre,
-          descripcion,
-        }
+        cleanData
       );
 
     return municipio;
@@ -131,9 +158,14 @@ export const updateMunicipioStatusService =
 
     if (!municipio) {
 
-      throw new Error(
-        "Municipio no encontrado"
-      );
+      const error =
+        new Error(
+          "Municipio no encontrado"
+        );
+
+      error.statusCode = 404;
+
+      throw error;
 
     }
 

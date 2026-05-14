@@ -9,6 +9,9 @@ import {
   Plus,
   Pencil,
   Power,
+  CheckCircle2,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 
 function MunicipiosAdmin() {
@@ -47,6 +50,14 @@ function MunicipiosAdmin() {
         descripcion: "",
       });
 
+  const [fieldErrors,
+    setFieldErrors] =
+      useState({});
+
+  const [notification,
+    setNotification] =
+      useState(null);
+
   const token =
     localStorage.getItem("token");
 
@@ -55,6 +66,118 @@ function MunicipiosAdmin() {
     loadMunicipios();
 
   }, []);
+
+  useEffect(() => {
+
+    if (!notification) {
+
+      return;
+
+    }
+
+    const timer =
+      setTimeout(() => {
+
+        setNotification(null);
+
+      }, 4200);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [notification]);
+
+  const showNotification =
+    (type, message) => {
+
+      setNotification({
+        type,
+        message,
+      });
+
+  };
+
+  const getMunicipioErrorMessage =
+    (message) => {
+
+      const normalizedMessage =
+        message?.toLowerCase() || "";
+
+      if (
+        normalizedMessage.includes(
+          "municipio ya existe"
+        )
+        ||
+        normalizedMessage.includes(
+          "ya existe un municipio"
+        )
+      ) {
+
+        return "No se puede registrar un municipio que ya existe";
+
+      }
+
+      return (
+        message
+        || "No se pudo completar la operacion"
+      );
+
+  };
+
+  const validateForm =
+    () => {
+
+      const errors = {};
+
+      if (!formData.nombre.trim()) {
+
+        errors.nombre =
+          "El nombre es obligatorio";
+
+      }
+
+      if (!formData.descripcion.trim()) {
+
+        errors.descripcion =
+          "La descripcion es obligatoria";
+
+      }
+
+      setFieldErrors(errors);
+
+      if (
+        Object.keys(errors).length > 0
+      ) {
+
+        showNotification(
+          "error",
+          "Completa los campos obligatorios marcados con *"
+        );
+
+        return false;
+
+      }
+
+      return true;
+
+  };
+
+  const getCleanFormData =
+    () => ({
+      nombre:
+        formData.nombre.trim(),
+      descripcion:
+        formData.descripcion.trim(),
+    });
+
+  const closeModal =
+    () => {
+
+      setShowModal(false);
+
+      setFieldErrors({});
+
+  };
 
   // =========================================
   // CARGAR MUNICIPIOS
@@ -96,11 +219,25 @@ function MunicipiosAdmin() {
   const handleChange =
     (e) => {
 
+      const {
+        name,
+        value,
+      } = e.target;
+
       setFormData({
         ...formData,
-        [e.target.name]:
-          e.target.value,
+        [name]:
+          value,
       });
+
+      if (fieldErrors[name]) {
+
+        setFieldErrors({
+          ...fieldErrors,
+          [name]: "",
+        });
+
+      }
 
   };
 
@@ -113,7 +250,16 @@ function MunicipiosAdmin() {
 
       e.preventDefault();
 
+      if (!validateForm()) {
+
+        return;
+
+      }
+
       try {
+
+        const cleanFormData =
+          getCleanFormData();
 
         const response =
           await fetch(
@@ -127,7 +273,7 @@ function MunicipiosAdmin() {
                   `Bearer ${token}`,
               },
               body: JSON.stringify(
-                formData
+                cleanFormData
               ),
             }
           );
@@ -137,18 +283,22 @@ function MunicipiosAdmin() {
 
         if (!response.ok) {
 
-          return alert(
-            data.message
-            || "Error al crear municipio"
+          return showNotification(
+            "error",
+            getMunicipioErrorMessage(
+              data.message
+            )
           );
 
         }
 
-        alert(
-          "Municipio creado correctamente"
+        showNotification(
+          "success",
+          data.message
+          || "Municipio creado correctamente"
         );
 
-        setShowModal(false);
+        closeModal();
 
         setFormData({
           nombre: "",
@@ -161,8 +311,9 @@ function MunicipiosAdmin() {
 
         console.log(error);
 
-        alert(
-          "Error del servidor"
+        showNotification(
+          "error",
+          "Ocurrio un error interno. Intentalo nuevamente."
         );
 
       }
@@ -178,7 +329,16 @@ function MunicipiosAdmin() {
 
       e.preventDefault();
 
+      if (!validateForm()) {
+
+        return;
+
+      }
+
       try {
+
+        const cleanFormData =
+          getCleanFormData();
 
         const response =
           await fetch(
@@ -192,7 +352,7 @@ function MunicipiosAdmin() {
                   `Bearer ${token}`,
               },
               body: JSON.stringify(
-                formData
+                cleanFormData
               ),
             }
           );
@@ -202,18 +362,22 @@ function MunicipiosAdmin() {
 
         if (!response.ok) {
 
-          return alert(
-            data.message
-            || "Error al editar"
+          return showNotification(
+            "error",
+            getMunicipioErrorMessage(
+              data.message
+            )
           );
 
         }
 
-        alert(
-          "Municipio actualizado"
+        showNotification(
+          "success",
+          data.message
+          || "Municipio actualizado correctamente"
         );
 
-        setShowModal(false);
+        closeModal();
 
         loadMunicipios();
 
@@ -221,8 +385,9 @@ function MunicipiosAdmin() {
 
         console.log(error);
 
-        alert(
-          "Error del servidor"
+        showNotification(
+          "error",
+          "Ocurrio un error interno. Intentalo nuevamente."
         );
 
       }
@@ -261,12 +426,19 @@ function MunicipiosAdmin() {
 
         if (!response.ok) {
 
-          return alert(
+          return showNotification(
+            "error",
             data.message
             || "Error al actualizar estado"
           );
 
         }
+
+        showNotification(
+          "success",
+          data.message
+          || "Estado actualizado correctamente"
+        );
 
         loadMunicipios();
 
@@ -274,8 +446,9 @@ function MunicipiosAdmin() {
 
         console.log(error);
 
-        alert(
-          "Error del servidor"
+        showNotification(
+          "error",
+          "Ocurrio un error interno. Intentalo nuevamente."
         );
 
       }
@@ -300,6 +473,8 @@ function MunicipiosAdmin() {
         descripcion: "",
       });
 
+      setFieldErrors({});
+
       setShowModal(true);
 
   };
@@ -323,6 +498,8 @@ function MunicipiosAdmin() {
         descripcion:
           municipio.descripcion || "",
       });
+
+      setFieldErrors({});
 
       setShowModal(true);
 
@@ -385,6 +562,125 @@ function MunicipiosAdmin() {
   return (
 
     <>
+
+      {
+        notification
+        && (
+
+          <div
+            role="alert"
+            className={`
+              fixed
+              top-6
+              right-6
+              z-[60]
+              w-[min(420px,calc(100vw-3rem))]
+              rounded-2xl
+              border
+              p-4
+              shadow-2xl
+              flex
+              items-start
+              gap-3
+
+              ${
+                notification.type ===
+                "success"
+                ? `
+                  bg-green-50
+                  border-green-200
+                  text-green-800
+                `
+                : `
+                  bg-red-50
+                  border-red-200
+                  text-red-800
+                `
+              }
+            `}
+          >
+
+            <div
+              className="
+                mt-0.5
+                shrink-0
+              "
+            >
+
+              {
+                notification.type ===
+                "success"
+                ? (
+
+                  <CheckCircle2
+                    size={22}
+                  />
+
+                )
+                : (
+
+                  <AlertTriangle
+                    size={22}
+                  />
+
+                )
+              }
+
+            </div>
+
+            <div className="flex-1">
+
+              <p
+                className="
+                  font-black
+                "
+              >
+                {
+                  notification.type ===
+                  "success"
+                  ? "Operacion exitosa"
+                  : "Atencion"
+                }
+              </p>
+
+              <p
+                className="
+                  text-sm
+                  mt-1
+                  leading-relaxed
+                "
+              >
+                {
+                  notification.message
+                }
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={
+                () =>
+                  setNotification(null)
+              }
+              className="
+                shrink-0
+                rounded-xl
+                p-1.5
+                hover:bg-black/5
+                transition-all
+              "
+              aria-label="Cerrar alerta"
+            >
+
+              <X size={18} />
+
+            </button>
+
+          </div>
+
+        )
+      }
 
       <div
         className="
@@ -985,10 +1281,7 @@ function MunicipiosAdmin() {
 
                     <button
                       onClick={
-                        () =>
-                          setShowModal(
-                            false
-                          )
+                        closeModal
                       }
                       className="
                         w-12
@@ -1015,6 +1308,7 @@ function MunicipiosAdmin() {
                     ? handleEdit
                     : handleCreate
                   }
+                  noValidate
                   className="
                     p-8
                     flex
@@ -1028,13 +1322,24 @@ function MunicipiosAdmin() {
 
                     <label
                       className="
-                        block
+                        flex
+                        items-center
+                        gap-1
                         mb-2
                         font-semibold
                         text-slate-700
                       "
                     >
                       Nombre
+
+                      <span
+                        className="
+                          text-red-500
+                        "
+                        aria-hidden="true"
+                      >
+                        *
+                      </span>
                     </label>
 
                     <input
@@ -1047,19 +1352,55 @@ function MunicipiosAdmin() {
                         handleChange
                       }
                       required
-                      className="
+                      aria-invalid={
+                        Boolean(
+                          fieldErrors.nombre
+                        )
+                      }
+                      className={`
                         w-full
-                        bg-slate-100
                         border
-                        border-slate-200
                         rounded-2xl
                         px-5
                         py-4
                         outline-none
                         focus:ring-2
-                        focus:ring-slate-300
-                      "
+
+                        ${
+                          fieldErrors.nombre
+                          ? `
+                            bg-red-50
+                            border-red-300
+                            focus:ring-red-200
+                          `
+                          : `
+                            bg-slate-100
+                            border-slate-200
+                            focus:ring-slate-300
+                          `
+                        }
+                      `}
                     />
+
+                    {
+                      fieldErrors.nombre
+                      && (
+
+                        <p
+                          className="
+                            mt-2
+                            text-sm
+                            font-semibold
+                            text-red-600
+                          "
+                        >
+                          {
+                            fieldErrors.nombre
+                          }
+                        </p>
+
+                      )
+                    }
 
                   </div>
 
@@ -1068,13 +1409,24 @@ function MunicipiosAdmin() {
 
                     <label
                       className="
-                        block
+                        flex
+                        items-center
+                        gap-1
                         mb-2
                         font-semibold
                         text-slate-700
                       "
                     >
                       Descripción
+
+                      <span
+                        className="
+                          text-red-500
+                        "
+                        aria-hidden="true"
+                      >
+                        *
+                      </span>
                     </label>
 
                     <textarea
@@ -1087,20 +1439,56 @@ function MunicipiosAdmin() {
                         handleChange
                       }
                       required
-                      className="
+                      aria-invalid={
+                        Boolean(
+                          fieldErrors.descripcion
+                        )
+                      }
+                      className={`
                         w-full
-                        bg-slate-100
                         border
-                        border-slate-200
                         rounded-2xl
                         px-5
                         py-4
                         outline-none
                         focus:ring-2
-                        focus:ring-slate-300
                         resize-none
-                      "
+
+                        ${
+                          fieldErrors.descripcion
+                          ? `
+                            bg-red-50
+                            border-red-300
+                            focus:ring-red-200
+                          `
+                          : `
+                            bg-slate-100
+                            border-slate-200
+                            focus:ring-slate-300
+                          `
+                        }
+                      `}
                     />
+
+                    {
+                      fieldErrors.descripcion
+                      && (
+
+                        <p
+                          className="
+                            mt-2
+                            text-sm
+                            font-semibold
+                            text-red-600
+                          "
+                        >
+                          {
+                            fieldErrors.descripcion
+                          }
+                        </p>
+
+                      )
+                    }
 
                   </div>
 
@@ -1117,10 +1505,7 @@ function MunicipiosAdmin() {
                     <button
                       type="button"
                       onClick={
-                        () =>
-                          setShowModal(
-                            false
-                          )
+                        closeModal
                       }
                       className="
                         px-6
