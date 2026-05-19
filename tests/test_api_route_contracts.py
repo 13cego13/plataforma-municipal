@@ -130,11 +130,11 @@ class ApiRouteContractTests(unittest.TestCase):
         routes = compact("backend-negocios/src/routes/imagen.routes.js")
 
         self.assertIn(
-            'router.post("/main/:id_negocio",verifyToken,verifyRole("DUENO_NEGOCIO"),upload.single("imagen"),uploadMainImage);',
+            'router.post("/main/:id_negocio",verifyToken,verifyRole("DUENO_NEGOCIO"),upload.single("imagen"),handleUploadError,uploadMainImage);',
             routes,
         )
         self.assertIn(
-            'router.post("/gallery/:id_negocio",verifyToken,verifyRole("DUENO_NEGOCIO"),upload.array("imagenes",10),uploadGalleryImages);',
+            'router.post("/gallery/:id_negocio",verifyToken,verifyRole("DUENO_NEGOCIO"),upload.array("imagenes",10),handleUploadError,uploadGalleryImages);',
             routes,
         )
         self.assertIn('router.get("/gallery/:id_negocio",getGalleryImages);', routes)

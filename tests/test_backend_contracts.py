@@ -19,17 +19,18 @@ class BackendContractTests(unittest.TestCase):
         controller = compact("backend/src/controllers/auth.controller.js")
 
         for required_field in (
-            "!nombre",
-            "!correo",
-            "!contrasena",
-            "!razon_social",
-            "!documento",
-            "!telefono",
+            "!cleanData.nombre",
+            "!cleanData.correo",
+            "!cleanData.contrasena",
+            "!cleanData.razon_social",
+            "!cleanData.documento",
+            "!cleanData.telefono",
         ):
             with self.subTest(field=required_field):
                 self.assertIn(required_field, controller)
 
-        self.assertIn("contrasena.length<8", controller)
+        self.assertIn("cleanData.contrasena.length<8", controller)
+        self.assertIn("registerService(cleanData)", controller)
         self.assertIn("res.status(400).json", controller)
         self.assertIn("res.status(201).json", controller)
         self.assertIn("res.status(401).json", controller)
@@ -37,9 +38,10 @@ class BackendContractTests(unittest.TestCase):
     def test_auth_service_blocks_duplicate_users_and_inactive_logins(self):
         service = compact("backend/src/services/auth.service.js")
 
-        self.assertIn("awaitfindUserByEmail(correo)", service)
-        self.assertIn('thrownewError("Elcorreoyaestáregistrado")', service)
-        self.assertIn("awaithashPassword(contrasena)", service)
+        self.assertIn("awaitfindUserByEmail(cleanData.correo)", service)
+        self.assertIn("error.statusCode=409", service)
+        self.assertIn('newError("Elcorreoyaestaregistrado")', service)
+        self.assertIn("awaithashPassword(cleanData.contrasena)", service)
         self.assertIn("awaitcreateBusinessOwner", service)
         self.assertIn('user.estado_usuario!=="APROBADO"', service)
         self.assertIn("consttoken=generateToken(user)", service)
@@ -68,10 +70,10 @@ class BackendContractTests(unittest.TestCase):
         model = compact("backend/src/models/auth.model.js")
 
         expected_fragments = (
-            "WHEREcorreo=$1",
+            "WHERELOWER(TRIM(correo))=LOWER(TRIM($1))",
             "VALUES($1,$2,$3,'PENDIENTE',NOW(),$4)",
             "VALUES($1,$2,$3,$4)",
-            "WHEREu.correo=$1",
+            "WHERELOWER(TRIM(u.correo))=LOWER(TRIM($1))",
             "WHEREid_usuario=$1",
         )
 
@@ -87,24 +89,28 @@ class BackendContractTests(unittest.TestCase):
 
         self.assertIn("awaitfindCategoriaByName(nombre)", categoria_service)
         self.assertIn("!categoria", categoria_service)
-        self.assertIn('thrownewError("Categoríanoencontrada")', categoria_service)
+        self.assertIn('newError("Categorianoencontrada")', categoria_service)
+        self.assertIn("error.statusCode=404", categoria_service)
+        self.assertIn("nombre:nombre.trim()", categoria_service)
         self.assertIn("duplicatedCategoria&&duplicatedCategoria.id_categoria!==id", categoria_service)
 
         self.assertIn("awaitfindMunicipioByName(nombre)", municipio_service)
         self.assertIn("!municipio", municipio_service)
-        self.assertIn('thrownewError("Municipionoencontrado")', municipio_service)
+        self.assertIn('newError("Municipionoencontrado")', municipio_service)
+        self.assertIn("error.statusCode=404", municipio_service)
+        self.assertIn("nombre:nombre.trim()", municipio_service)
         self.assertIn("duplicatedMunicipio&&duplicatedMunicipio.id_municipio!==id", municipio_service)
 
     def test_admin_models_use_parameterized_writes(self):
         for model_path, expected_fragments in {
             "backend-admin/src/models/categoria.model.js": (
-                "WHERELOWER(nombre)=LOWER($1)",
+                "WHERELOWER(TRIM(nombre))=LOWER(TRIM($1))",
                 "VALUES($1,$2,$3,true,NOW())",
                 "WHEREid_categoria=$4",
                 "SETestado=$1WHEREid_categoria=$2",
             ),
             "backend-admin/src/models/municipio.model.js": (
-                "WHERELOWER(nombre)=LOWER($1)",
+                "WHERELOWER(TRIM(nombre))=LOWER(TRIM($1))",
                 "VALUES($1,$2,true,NOW())",
                 "WHEREid_municipio=$3",
                 "SETestado=$1WHEREid_municipio=$2",

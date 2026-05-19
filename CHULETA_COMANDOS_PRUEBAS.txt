@@ -1,0 +1,71 @@
+CHULETA DE COMANDOS PARA EJECUTAR PRUEBAS
+=========================================
+
+Primero ubicarse en la raiz del proyecto:
+
+cd C:\Users\user\Desktop\plataforma-municipal
+
+
+1. PRUEBAS DE UNIDAD / CONTRACTUALES
+------------------------------------
+
+Comando recomendado:
+
+python run_tests.py
+
+Alternativa con unittest:
+
+python -m unittest discover -s tests
+
+
+2. PRUEBAS DE ANALISIS DE FRONTERAS
+-----------------------------------
+
+Comando recomendado:
+
+python run_boundary_tests.py
+
+Alternativa con unittest:
+
+python -m unittest discover -s tests_boundary_analysis
+
+
+3. PRUEBAS DE COMPLEJIDAD CICLOMATICA
+-------------------------------------
+
+Comando recomendado:
+
+python run_cyclomatic_tests.py
+
+Alternativa con unittest:
+
+python -m unittest discover -s tests_cyclomatic_complexity
+
+
+4. PRUEBAS DE TABLAS DE DECISION
+--------------------------------
+
+Comando recomendado:
+
+python run_decision_table_tests.py
+
+Alternativa con unittest:
+
+python -m unittest discover -s tests_decision_tables
+
+
+EJECUTAR TODAS LAS PRUEBAS
+--------------------------
+
+python run_tests.py
+python run_boundary_tests.py
+python run_cyclomatic_tests.py
+python run_decision_table_tests.py
+
+
+NOTA
+----
+
+Los comandos recomendados muestran un reporte mas entendible para el equipo.
+Los comandos con unittest son alternativas por si se quiere ejecutar directamente
+la suite de Python sin el reporte personalizado.
